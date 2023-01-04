@@ -3,6 +3,8 @@ package kg.bekzhan.megalab.entities;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -19,20 +21,25 @@ public class User {
     private int id;
     private String lastName;
     private String firstName;
-    private String nickName;
+    private String username;
     private String password;
     private String photoPath;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<Role> roles = new HashSet<>();
 
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "user")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private RefreshToken refreshToken;
 
-    public User(String lastName, String firstName, String nickName, String password) {
+
+    public User(String lastName, String firstName, String username, String password) {
         this.lastName = lastName;
         this.firstName = firstName;
-        this.nickName = nickName;
+        this.username = username;
         this.password = password;
     }
 }
