@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-@AllArgsConstructorl
+@AllArgsConstructor
 public class PostRequest {
     private String header;
     private String text;

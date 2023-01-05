@@ -5,15 +5,19 @@ import kg.bekzhan.megalab.entities.NewsTag;
 import kg.bekzhan.megalab.entities.Post;
 import kg.bekzhan.megalab.entities.User;
 import kg.bekzhan.megalab.payload.requests.PostRequest;
+import kg.bekzhan.megalab.payload.responses.MessageResponse;
 import kg.bekzhan.megalab.repo.NewsTagRepo;
 import kg.bekzhan.megalab.repo.PostRepo;
+import kg.bekzhan.megalab.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -21,18 +25,19 @@ import java.util.*;
 public class PostServiceImpl implements PostService {
     private final PostRepo postRepo;
     private final NewsTagRepo newsTagRepo;
+    private final UserRepo userRepo;
 
     @Value("${upload.path}")
     private String uploadPath;
 
     @Override
-    public Post createPost(PostRequest post, MultipartFile photo, User user) throws IOException {
+    public MessageResponse createPost(PostRequest post, MultipartFile photo, UserDetails user) throws IOException {
         Post newPost = new Post();
         newPost.setHeader(post.getHeader());
         newPost.setText(post.getText());
         newPost.setPublishedDate(new Date());
 
-        if (photo.isEmpty()) {
+        if (photo == null || photo.isEmpty()) {
             newPost.setPhotoURL(uploadPath + "/" + "default-news.jpg");
         } else {
             File uploadDir = new File(uploadPath);
@@ -80,9 +85,16 @@ public class PostServiceImpl implements PostService {
         });
 
         newPost.setTags(tags);
-        newPost.setUser(user);
+        User userFromDb = userRepo.findByUsername(user.getUsername()).get();
+        newPost.setUser(userFromDb);
 
 
-        return postRepo.save(newPost);
+        postRepo.save(newPost);
+        return new MessageResponse("Post has created successfully!");
+    }
+
+    @Override
+    public List<Post> fetchPosts() {
+        return postRepo.findAll();
     }
 }

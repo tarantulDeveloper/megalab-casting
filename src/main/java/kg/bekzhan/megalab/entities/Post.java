@@ -5,6 +5,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,6 +21,7 @@ public class Post {
     @Column(columnDefinition = "TEXT")
     private String text;
     private String photoURL;
+
     @Temporal(TemporalType.DATE)
     private Date publishedDate;
 
@@ -33,6 +35,7 @@ public class Post {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "author_id")
     private User user;
+
 
 
 
