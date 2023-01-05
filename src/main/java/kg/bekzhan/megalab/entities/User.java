@@ -1,5 +1,7 @@
 package kg.bekzhan.megalab.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,6 +24,7 @@ public class User {
     private String lastName;
     private String firstName;
     private String username;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     private String photoPath;
     @ManyToMany(fetch = FetchType.EAGER)
@@ -31,9 +34,7 @@ public class User {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<Role> roles = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.ALL, mappedBy = "user")
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private RefreshToken refreshToken;
+
 
 
     public User(String lastName, String firstName, String username, String password) {

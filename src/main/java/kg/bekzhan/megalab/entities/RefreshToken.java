@@ -13,8 +13,9 @@ public class RefreshToken {
     @GeneratedValue
     private int id;
 
-    @JsonIgnore
+
     @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
     @Column(nullable = false, unique = true)
