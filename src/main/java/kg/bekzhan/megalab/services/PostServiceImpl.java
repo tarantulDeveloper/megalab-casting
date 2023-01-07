@@ -11,14 +11,20 @@ import kg.bekzhan.megalab.repo.PostRepo;
 import kg.bekzhan.megalab.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.function.EntityResponse;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Predicate;
+
+
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +44,7 @@ public class PostServiceImpl implements PostService {
         newPost.setPublishedDate(new Date());
 
         if (photo == null || photo.isEmpty()) {
-            newPost.setPhotoURL(uploadPath + "/" + "default-news.jpg");
+            newPost.setPhotoURL(uploadPath + "/" + "default-news.png");
         } else {
             File uploadDir = new File(uploadPath);
             if (!uploadDir.exists()) {
@@ -85,16 +91,51 @@ public class PostServiceImpl implements PostService {
         });
 
         newPost.setTags(tags);
-        User userFromDb = userRepo.findByUsername(user.getUsername()).get();
-        newPost.setUser(userFromDb);
-
-
-        postRepo.save(newPost);
+        User userFromDb = userRepo.findByUsername(user.getUsername()).orElseThrow(
+                () -> new RuntimeException("No such user!"));
+        userFromDb.getMyPosts().add(newPost);
+        userRepo.save(userFromDb);
         return new MessageResponse("Post has created successfully!");
     }
 
     @Override
     public List<Post> fetchPosts() {
         return postRepo.findAll();
+    }
+
+    @Override
+    public MessageResponse addToFavouritePost(Integer postId, UserDetails userDetails) {
+        User user = userRepo.findByUsername(userDetails.getUsername()).orElseThrow(
+                () -> new RuntimeException("No suh user!")
+        );
+        Post post = postRepo.findById(postId).orElseThrow(
+                () -> new RuntimeException("No such post!")
+        );
+        user.getFavouritePosts().add(post);
+        userRepo.save(user);
+        return new MessageResponse("Post has been added to favourites!");
+    }
+
+    @Override
+    public ResponseEntity<?> deletePostByIdByEditor(Integer postId) {
+
+        postRepo.deletePostByIdCustomMethod(postId);
+        return ResponseEntity.ok().body(new MessageResponse("Post has been deleted successfully"));
+    }
+
+    @Override
+    public ResponseEntity<?> deletePostByIdByReader(Integer postId, UserDetails userDetails) {
+        User me = userRepo.findByUsername(userDetails.getUsername()).orElseThrow(
+                () -> new RuntimeException("No such user!")
+        );
+        Optional<Post> idMatchedPostInMyPosts = me.getMyPosts().stream().filter(post -> post.getId() == postId).findFirst();
+        if(idMatchedPostInMyPosts.isPresent()) {
+            postRepo.deletePostByIdCustomMethod(postId);
+            return ResponseEntity.ok().body(new MessageResponse("Post has been deleted successfully"));
+        }
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new MessageResponse("You can delete only your posts!"));
+
+
     }
 }

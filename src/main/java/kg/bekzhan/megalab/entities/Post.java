@@ -6,12 +6,10 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Data
-@Entity
+@Entity(name = "posts")
 public class Post {
     @Id
     @GeneratedValue(generator = "post_id_generator", strategy = GenerationType.SEQUENCE)
@@ -25,19 +23,21 @@ public class Post {
     @Temporal(TemporalType.DATE)
     private Date publishedDate;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "posts_tags",
     joinColumns = @JoinColumn(name = "post_id"),
     inverseJoinColumns = @JoinColumn(name = "tag_id"))
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<NewsTag> tags = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "author_id")
-    private User user;
+//    @ManyToOne(fetch = FetchType.EAGER)
+//    @JoinColumn(name = "author_id")
+//    @OnDelete(action = OnDeleteAction.CASCADE)
+//    private User user;
 
-
-
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "post_id", referencedColumnName = "id")
+    private List<Comment> commentList = new ArrayList<>();
 
 
 }

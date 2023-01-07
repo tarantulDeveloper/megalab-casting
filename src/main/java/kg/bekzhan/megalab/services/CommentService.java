@@ -8,5 +8,5 @@ import org.springframework.security.core.userdetails.UserDetails;
 public interface CommentService {
     MessageResponse createComment(CommentRequest comment, Integer postId, UserDetails userDetails);
 
-    MessageResponse createReply(CommentRequest comment, Integer postId, Integer commentId, UserDetails userDetails);
+    MessageResponse createReply(CommentRequest comment,Integer commentId, UserDetails userDetails);
 }

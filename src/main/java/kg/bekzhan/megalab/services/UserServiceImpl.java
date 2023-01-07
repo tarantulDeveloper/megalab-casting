@@ -60,7 +60,7 @@ public class UserServiceImpl implements UserService {
 
         user.setRoles(roles);
 
-        user.setPhotoPath(uploadPath + "/" + "default-profile.jpg");
+        user.setPhotoPath(uploadPath + "/" + "default-profile.png");
 
 
         userRepo.save(user);

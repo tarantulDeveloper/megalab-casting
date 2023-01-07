@@ -12,7 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.Date;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -21,35 +23,38 @@ public class CommentServiceImpl implements CommentService{
     private final PostRepo postRepo;
     private final UserRepo userRepo;
 
+    @Transactional
     @Override
     public MessageResponse createComment(CommentRequest comment, Integer postId, UserDetails userDetails) {
         Post post = postRepo.findById(postId).orElseThrow(() -> new RuntimeException("No such post!"));
+
         Comment newComment = new Comment();
-        newComment.setPost(post);
+//        newComment.setPost(post);
         newComment.setDate(new Date());
         newComment.setMessage(comment.getMessage());
         User user = userRepo.findByUsername(userDetails.getUsername()).orElseThrow(
                 () -> new RuntimeException("No such User!"));
-        newComment.setUser(user);
+        newComment.setAuthorName(user.getFirstName() + " " + user.getLastName());
+        post.getCommentList().add(newComment);
+        postRepo.save(post);
         commentRepo.save(newComment);
 
         return new MessageResponse("Comment has created successfully!");
     }
 
     @Override
-    public MessageResponse createReply(CommentRequest comment, Integer postId, Integer commentId, UserDetails userDetails) {
-        Post post = postRepo.findById(postId).orElseThrow(() -> new RuntimeException("No such post!"));
+    public MessageResponse createReply(CommentRequest comment,Integer commentId, UserDetails userDetails) {
         Comment parentComment = commentRepo.findById(commentId).orElseThrow(() -> new RuntimeException("No such comment!"));
         User user = userRepo.findByUsername(userDetails.getUsername()).orElseThrow(
                 () -> new RuntimeException("No such User!"));
         Comment replyComment = new Comment();
-        replyComment.setPost(post);
         replyComment.setDate(new Date());
         replyComment.setMessage(comment.getMessage());
-        replyComment.setReply(parentComment);
-        replyComment.setUser(user);
+        replyComment.setAuthorName(user.getFirstName() + " " + user.getLastName());
+        parentComment.setReply(replyComment);
+        commentRepo.save(parentComment);
 
-        commentRepo.save(replyComment);
+
         return new MessageResponse("Comment has added successfully!");
     }
 
