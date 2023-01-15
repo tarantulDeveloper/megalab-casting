@@ -20,11 +20,11 @@ public class CommentController {
         return commentService.createComment(comment, postId, userDetails);
     }
 
-    @PostMapping("/{postId}/{commentId}")
-    public MessageResponse createReply(@RequestBody CommentRequest comment, @PathVariable("postId") Integer postId,
-                                           @PathVariable("commentId") Integer commentId,
-                                           @AuthenticationPrincipal UserDetails userDetails) {
-        return commentService.createReply(comment,postId,commentId,userDetails);
+    @PostMapping("/reply/{commentId}")
+    public MessageResponse createReply(@RequestBody CommentRequest comment,
+                                       @PathVariable("commentId") Integer commentId,
+                                       @AuthenticationPrincipal UserDetails userDetails) {
+        return commentService.createReply(comment, commentId, userDetails);
     }
 
 }

@@ -8,8 +8,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class NewsTagServiceImpl implements NewsTagService{
+public class NewsTagServiceImpl implements NewsTagService {
     private final NewsTagRepo newsTagRepo;
+
     @Override
     public NewsTag createTag(String newsTag) {
         NewsTag tag = new NewsTag(ENewsTags.valueOf(newsTag));

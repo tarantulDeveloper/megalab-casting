@@ -17,7 +17,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 
-
 public class AuthTokenFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -50,7 +49,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             logger.error("Cannot set authentication: {}", e);
         }
 
-        filterChain.doFilter(request,response);
+        filterChain.doFilter(request, response);
 
     }
 

@@ -1,6 +1,5 @@
 package kg.bekzhan.megalab.entities;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,7 +21,7 @@ public class Role {
     @Enumerated(EnumType.STRING)
     private ERole name;
 
-    public Role (ERole name) {
+    public Role(ERole name) {
         this.name = name;
     }
 }

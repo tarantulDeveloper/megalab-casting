@@ -40,12 +40,12 @@ public class JwtUtils {
     }
 
     public ResponseCookie generateCookie(String name, String value, String path) {
-        return ResponseCookie.from(name, value).path(path).maxAge(24*60*60).httpOnly(true).build();
+        return ResponseCookie.from(name, value).path(path).maxAge(24 * 60 * 60).httpOnly(true).build();
     }
 
     public String getCookieValueByName(HttpServletRequest req, String name) {
         Cookie cookie = WebUtils.getCookie(req, name);
-        if(cookie != null) {
+        if (cookie != null) {
             return cookie.getValue();
         } else {
             return null;
