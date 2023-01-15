@@ -4,6 +4,8 @@ import kg.bekzhan.megalab.entities.ERole;
 import kg.bekzhan.megalab.entities.RefreshToken;
 import kg.bekzhan.megalab.entities.Role;
 import kg.bekzhan.megalab.entities.User;
+import kg.bekzhan.megalab.exceptions.ResourceIsAlreadyExistException;
+import kg.bekzhan.megalab.exceptions.ResourceNotFoundException;
 import kg.bekzhan.megalab.exceptions.UserNotFoundException;
 import kg.bekzhan.megalab.jwt.JwtUtils;
 import kg.bekzhan.megalab.payload.requests.LoginRequest;
@@ -14,6 +16,10 @@ import kg.bekzhan.megalab.repo.RoleRepo;
 import kg.bekzhan.megalab.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -61,12 +67,12 @@ public class UserServiceImpl implements UserService {
         );
 
         if (userRepo.existsByUsername(user.getUsername()) || userRepo.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("User is already exist!");
+            throw new ResourceIsAlreadyExistException("User is already exist!");
         }
 
         Set<Role> roles = new HashSet<>();
         Role readerRole = roleRepo.findByName(ERole.ROLE_READER).orElseThrow(
-                () -> new RuntimeException("No such role")
+                () -> new ResourceNotFoundException("No such role")
         );
         roles.add(readerRole);
 
@@ -97,8 +103,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<User> fetchAllUsers() {
-        return userRepo.findAll();
+    public Page<User> fetchAllUsers(Integer pageNo, Integer pageSize, String sortBy) {
+        Pageable paging = PageRequest.of(pageNo, pageSize, Sort.by(sortBy));
+        return userRepo.findAll(paging);
     }
 
     @Override
@@ -176,11 +183,20 @@ public class UserServiceImpl implements UserService {
                 UserNotFoundException::new
         );
         Role adminRole = roleRepo.findByName(ERole.ROLE_EDITOR).orElseThrow(
-                () -> new RuntimeException("No such role!")
+                () -> new ResourceNotFoundException("No such role!")
         );
         user.getRoles().add(adminRole);
         userRepo.save(user);
         return new MessageResponse("User's role has been updated");
+    }
+
+    @Override
+    public MessageResponse deleteUserById(Integer userId) {
+        User user = userRepo.findById(userId).orElseThrow(
+                UserNotFoundException::new
+        );
+        userRepo.delete(user);
+        return new MessageResponse("User has been deleted successfully!");
     }
 
     public static String createPhotoUrl(MultipartFile file, String uploadPath) throws IOException {

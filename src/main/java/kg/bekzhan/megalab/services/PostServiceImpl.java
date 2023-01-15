@@ -4,6 +4,9 @@ import kg.bekzhan.megalab.entities.ENewsTags;
 import kg.bekzhan.megalab.entities.NewsTag;
 import kg.bekzhan.megalab.entities.Post;
 import kg.bekzhan.megalab.entities.User;
+import kg.bekzhan.megalab.exceptions.ResourceNotFoundException;
+import kg.bekzhan.megalab.exceptions.TagIsNotFoundException;
+import kg.bekzhan.megalab.exceptions.UserNotFoundException;
 import kg.bekzhan.megalab.payload.responses.MessageResponse;
 import kg.bekzhan.megalab.repo.NewsTagRepo;
 import kg.bekzhan.megalab.repo.PostRepo;
@@ -57,27 +60,27 @@ public class PostServiceImpl implements PostService {
             switch (tag) {
                 case "SPORT" -> {
                     NewsTag sportTag = newsTagRepo.findNewsTagByTag(ENewsTags.SPORT)
-                            .orElseThrow(() -> new RuntimeException("Error: Tag is not found!"));
+                            .orElseThrow(TagIsNotFoundException::new);
                     tags.add(sportTag);
                 }
                 case "POLITICS" -> {
                     NewsTag politicsTag = newsTagRepo.findNewsTagByTag(ENewsTags.POLITICS)
-                            .orElseThrow(() -> new RuntimeException("Error: Tag is not found!"));
+                            .orElseThrow(TagIsNotFoundException::new);
                     tags.add(politicsTag);
                 }
                 case "STARS" -> {
                     NewsTag starsTag = newsTagRepo.findNewsTagByTag(ENewsTags.STARS)
-                            .orElseThrow(() -> new RuntimeException("Error: Tag is not found!"));
+                            .orElseThrow(TagIsNotFoundException::new);
                     tags.add(starsTag);
                 }
                 case "ART" -> {
                     NewsTag artTag = newsTagRepo.findNewsTagByTag(ENewsTags.ART)
-                            .orElseThrow(() -> new RuntimeException("Error: Tag is not found!"));
+                            .orElseThrow(TagIsNotFoundException::new);
                     tags.add(artTag);
                 }
                 case "FASHION" -> {
                     NewsTag fashionTag = newsTagRepo.findNewsTagByTag(ENewsTags.FASHION)
-                            .orElseThrow(() -> new RuntimeException("Error: Tag is not found!"));
+                            .orElseThrow(TagIsNotFoundException::new);
                     tags.add(fashionTag);
                 }
             }
@@ -85,7 +88,7 @@ public class PostServiceImpl implements PostService {
 
         newPost.setTags(tags);
         User userFromDb = userRepo.findByUsername(user.getUsername()).orElseThrow(
-                () -> new RuntimeException("No such user!"));
+                UserNotFoundException::new);
         newPost.setAuthorName(userFromDb.getFirstName() + " " + userFromDb.getLastName());
         userFromDb.getMyPosts().add(newPost);
         userRepo.save(userFromDb);
@@ -101,10 +104,10 @@ public class PostServiceImpl implements PostService {
     @Override
     public MessageResponse addToFavouritePost(Integer postId, UserDetails userDetails) {
         User user = userRepo.findByUsername(userDetails.getUsername()).orElseThrow(
-                () -> new RuntimeException("No suh user!")
+                UserNotFoundException::new
         );
         Post post = postRepo.findById(postId).orElseThrow(
-                () -> new RuntimeException("No such post!")
+                () -> new ResourceNotFoundException("No such post!")
         );
         user.getFavouritePosts().add(post);
         userRepo.save(user);
@@ -121,7 +124,7 @@ public class PostServiceImpl implements PostService {
     @Override
     public MessageResponse deletePostByIdByReader(Integer postId, UserDetails userDetails) {
         User me = userRepo.findByUsername(userDetails.getUsername()).orElseThrow(
-                () -> new RuntimeException("No such user!")
+                UserNotFoundException::new
         );
         Optional<Post> idMatchedPostInMyPosts = me.getMyPosts().stream().filter(post -> post.getId() == postId).findFirst();
         if (idMatchedPostInMyPosts.isPresent()) {
@@ -129,7 +132,7 @@ public class PostServiceImpl implements PostService {
             return new MessageResponse("Post has been deleted successfully");
         }
 
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new MessageResponse("You can delete only your posts!")).getBody();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new MessageResponse("You can delete only your own posts!")).getBody();
 
 
     }
@@ -138,7 +141,7 @@ public class PostServiceImpl implements PostService {
     public List<Post> fetchPostsByTag(String[] tags) {
         Set<NewsTag> newsTags = new HashSet<>();
         Arrays.asList(tags).forEach(tag -> newsTags.add(newsTagRepo.findNewsTagByTag(ENewsTags.valueOf(tag)).orElseThrow(
-                () -> new RuntimeException("No such tags")
+                TagIsNotFoundException::new
         )));
 
         return postRepo.findByTagsIn(new ArrayList<>(newsTags));

@@ -5,6 +5,7 @@ import kg.bekzhan.megalab.payload.requests.LoginRequest;
 import kg.bekzhan.megalab.payload.requests.SignupRequest;
 import kg.bekzhan.megalab.payload.responses.MessageResponse;
 import kg.bekzhan.megalab.payload.responses.UserInfoResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,7 +17,7 @@ import java.util.List;
 public interface UserService {
     MessageResponse registerUser(SignupRequest signupRequest);
 
-    List<User> fetchAllUsers();
+    Page<User> fetchAllUsers(Integer pageNo, Integer pageSize, String sortBy);
 
     ResponseEntity<UserInfoResponse> login(LoginRequest loginRequest);
 
@@ -27,4 +28,6 @@ public interface UserService {
     String activateUser(String activationCode);
 
     MessageResponse makeEditor(Integer userId);
+
+    MessageResponse deleteUserById(Integer userId);
 }

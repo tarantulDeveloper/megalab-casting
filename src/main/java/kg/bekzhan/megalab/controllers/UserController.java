@@ -4,6 +4,7 @@ import kg.bekzhan.megalab.entities.User;
 import kg.bekzhan.megalab.payload.responses.MessageResponse;
 import kg.bekzhan.megalab.services.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.parameters.P;
@@ -21,9 +22,14 @@ public class UserController {
     private final UserService userService;
 
 
+    @PreAuthorize("hasRole('EDITOR')")
     @GetMapping("/")
-    public List<User> fetchAllUsers() {
-        return userService.fetchAllUsers();
+    public Page<User> fetchAllUsers(
+            @RequestParam(defaultValue = "0") Integer pageNo,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(defaultValue = "id") String sortBy
+    ) {
+        return userService.fetchAllUsers(pageNo, pageSize, sortBy);
     }
 
 
@@ -46,5 +52,11 @@ public class UserController {
     @DeleteMapping("/photo")
     public MessageResponse deleteProfilePhoto(@AuthenticationPrincipal UserDetails userDetails) {
         return userService.deletePhoto(userDetails);
+    }
+
+    @PreAuthorize("hasRole('EDITOR')")
+    @DeleteMapping("/{userId}")
+    public MessageResponse deleteUserById(@PathVariable("userId") Integer userId) {
+        return userService.deleteUserById(userId);
     }
 }

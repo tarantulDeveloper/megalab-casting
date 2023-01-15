@@ -3,6 +3,7 @@ package kg.bekzhan.megalab.services;
 import kg.bekzhan.megalab.entities.Comment;
 import kg.bekzhan.megalab.entities.Post;
 import kg.bekzhan.megalab.entities.User;
+import kg.bekzhan.megalab.exceptions.UserNotFoundException;
 import kg.bekzhan.megalab.payload.requests.CommentRequest;
 import kg.bekzhan.megalab.payload.responses.MessageResponse;
 import kg.bekzhan.megalab.repo.CommentRepo;
@@ -32,7 +33,7 @@ public class CommentServiceImpl implements CommentService {
         newComment.setDate(new Date());
         newComment.setMessage(comment.getMessage());
         User user = userRepo.findByUsername(userDetails.getUsername()).orElseThrow(
-                () -> new RuntimeException("No such User!"));
+                UserNotFoundException::new);
         newComment.setAuthorName(user.getFirstName() + " " + user.getLastName());
         post.getCommentList().add(newComment);
         postRepo.save(post);
@@ -45,7 +46,7 @@ public class CommentServiceImpl implements CommentService {
     public MessageResponse createReply(CommentRequest comment, Integer commentId, UserDetails userDetails) {
         Comment parentComment = commentRepo.findById(commentId).orElseThrow(() -> new RuntimeException("No such comment!"));
         User user = userRepo.findByUsername(userDetails.getUsername()).orElseThrow(
-                () -> new RuntimeException("No such User!"));
+                UserNotFoundException::new);
         Comment replyComment = new Comment();
         replyComment.setDate(new Date());
         replyComment.setMessage(comment.getMessage());

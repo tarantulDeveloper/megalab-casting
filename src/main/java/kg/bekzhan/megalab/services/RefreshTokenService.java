@@ -3,6 +3,7 @@ package kg.bekzhan.megalab.services;
 import kg.bekzhan.megalab.entities.RefreshToken;
 import kg.bekzhan.megalab.entities.User;
 import kg.bekzhan.megalab.exceptions.TokenRefreshException;
+import kg.bekzhan.megalab.exceptions.UserNotFoundException;
 import kg.bekzhan.megalab.jwt.JwtUtils;
 import kg.bekzhan.megalab.payload.responses.MessageResponse;
 import kg.bekzhan.megalab.repo.RefreshTokenRepo;
@@ -39,7 +40,7 @@ public class RefreshTokenService {
 
     public RefreshToken generateRefreshToken(Integer userId) {
         User currentUser = userRepo.findById(userId).orElseThrow(
-                () -> new RuntimeException("No such User!")
+                UserNotFoundException::new
         );
         RefreshToken refreshToken = new RefreshToken();
 
@@ -74,7 +75,7 @@ public class RefreshTokenService {
     @Transactional
     public void deleteByUserId(Integer userId) {
         refreshTokenRepo.deleteByUser(userRepo.findById(userId).orElseThrow(
-                () -> new RuntimeException("No such user!")
+                UserNotFoundException::new
         ));
     }
 
