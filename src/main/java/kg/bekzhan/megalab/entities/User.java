@@ -12,9 +12,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Entity(name="users")
+@Entity(name = "users")
 @Data
-@Table(name = "users")
+@Table(name = "users",
+uniqueConstraints = {
+        @UniqueConstraint(columnNames = "username"),
+        @UniqueConstraint(columnNames = "email")
+})
 @NoArgsConstructor
 public class User {
     @Id
@@ -24,9 +28,13 @@ public class User {
     private String lastName;
     private String firstName;
     private String username;
+    private String email;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+    private boolean active;
+    private String activationCode;
     private String photoPath;
+    private String originalPhotoName;
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "users_roles",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -36,8 +44,8 @@ public class User {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "users_favourite_news",
-    joinColumns = @JoinColumn(name = "user_id"),
-    inverseJoinColumns = @JoinColumn(name = "post_id"))
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "post_id"))
     @OnDelete(action = OnDeleteAction.CASCADE)
     private List<Post> favouritePosts = new ArrayList<>();
 
@@ -47,10 +55,11 @@ public class User {
     private List<Post> myPosts = new ArrayList<>();
 
 
-    public User(String lastName, String firstName, String username, String password) {
+    public User(String lastName, String firstName, String username, String password, String email) {
         this.lastName = lastName;
         this.firstName = firstName;
         this.username = username;
         this.password = password;
+        this.email = email;
     }
 }

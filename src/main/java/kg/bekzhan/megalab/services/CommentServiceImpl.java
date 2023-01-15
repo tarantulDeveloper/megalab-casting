@@ -14,11 +14,10 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.Date;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class CommentServiceImpl implements CommentService{
+public class CommentServiceImpl implements CommentService {
     private final CommentRepo commentRepo;
     private final PostRepo postRepo;
     private final UserRepo userRepo;
@@ -43,7 +42,7 @@ public class CommentServiceImpl implements CommentService{
     }
 
     @Override
-    public MessageResponse createReply(CommentRequest comment,Integer commentId, UserDetails userDetails) {
+    public MessageResponse createReply(CommentRequest comment, Integer commentId, UserDetails userDetails) {
         Comment parentComment = commentRepo.findById(commentId).orElseThrow(() -> new RuntimeException("No such comment!"));
         User user = userRepo.findByUsername(userDetails.getUsername()).orElseThrow(
                 () -> new RuntimeException("No such User!"));

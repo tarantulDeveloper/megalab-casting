@@ -1,12 +1,11 @@
 package kg.bekzhan.megalab.controllers;
 
 import kg.bekzhan.megalab.entities.Post;
-import kg.bekzhan.megalab.payload.requests.PostRequest;
 import kg.bekzhan.megalab.payload.responses.MessageResponse;
 import kg.bekzhan.megalab.repo.PostRepo;
 import kg.bekzhan.megalab.services.PostService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +17,7 @@ import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
+//@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
 public class PostController {
@@ -25,16 +25,16 @@ public class PostController {
     private final PostRepo postRepo;
 
     @PostMapping
-    public MessageResponse createPost(@RequestPart("post") PostRequest post,
-                                      @RequestPart(value = "photo", required = false) MultipartFile photo,
+    public MessageResponse createPost(@RequestParam("header") String header,
+                                      @RequestParam("text") String text,
+                                      @RequestParam("tags[]") String[] tags,
+                                      @RequestParam(value = "photo", required = false) MultipartFile photo,
                                       @AuthenticationPrincipal UserDetails user) throws IOException {
-        return postService.createPost(post, photo, user);
+
+        return postService.createPost(header, text, tags, photo, user);
     }
 
-    @GetMapping
-    public List<Post> fetchPosts() {
-        return postService.fetchPosts();
-    }
+
 
     @PostMapping("/add-to-favourites/{postId}")
     public MessageResponse addPostToFavourites(@PathVariable("postId") Integer postId,
@@ -43,18 +43,18 @@ public class PostController {
     }
 
 
-    @GetMapping("/")
-    public String helloUser(HttpServletRequest request) {
-        if (request.isUserInRole("ROLE_EDITOR")) {
-            return "Hello user";
-        } else {
-            return "Hello admin";
-        }
-    }
+//    @GetMapping("/")
+//    public String helloUser(HttpServletRequest request) {
+//        if (request.isUserInRole("ROLE_EDITOR")) {
+//            return "Hello user";
+//        } else {
+//            return "Hello admin";
+//        }
+//    }
 
     @DeleteMapping("/{postId}")
-    public ResponseEntity<?> deletePostById(@PathVariable("postId") Integer postId, HttpServletRequest request,
-                                            @AuthenticationPrincipal UserDetails userdetails) {
+    public MessageResponse deletePostById(@PathVariable("postId") Integer postId, HttpServletRequest request,
+                                          @AuthenticationPrincipal UserDetails userdetails) {
 
         postRepo.findById(postId).orElseThrow(
                 () -> new RuntimeException("No such post!")
@@ -63,7 +63,6 @@ public class PostController {
         if (request.isUserInRole("ROLE_EDITOR")) {
             return postService.deletePostByIdByEditor(postId);
         } else {
-
             return postService.deletePostByIdByReader(postId, userdetails);
         }
     }

@@ -4,26 +4,24 @@ import kg.bekzhan.megalab.entities.ENewsTags;
 import kg.bekzhan.megalab.entities.NewsTag;
 import kg.bekzhan.megalab.entities.Post;
 import kg.bekzhan.megalab.entities.User;
-import kg.bekzhan.megalab.payload.requests.PostRequest;
 import kg.bekzhan.megalab.payload.responses.MessageResponse;
 import kg.bekzhan.megalab.repo.NewsTagRepo;
 import kg.bekzhan.megalab.repo.PostRepo;
 import kg.bekzhan.megalab.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.function.EntityResponse;
 
-import java.io.File;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.*;
-import java.util.function.Predicate;
-
 
 
 @Service
@@ -37,30 +35,25 @@ public class PostServiceImpl implements PostService {
     private String uploadPath;
 
     @Override
-    public MessageResponse createPost(PostRequest post, MultipartFile photo, UserDetails user) throws IOException {
+    public MessageResponse createPost(String header, String text, String[] mytags, MultipartFile photo, UserDetails user) throws IOException {
         Post newPost = new Post();
-        newPost.setHeader(post.getHeader());
-        newPost.setText(post.getText());
+        newPost.setHeader(header);
+        newPost.setText(text);
         newPost.setPublishedDate(new Date());
 
         if (photo == null || photo.isEmpty()) {
-            newPost.setPhotoURL(uploadPath + "/" + "default-news.png");
+            newPost.setPhotoURL(uploadPath + "/" + "default-news.jpg");
+            newPost.setOriginalPhotoName("default-news.jpg");
         } else {
-            File uploadDir = new File(uploadPath);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdir();
-            }
-
-            String uuidFile = UUID.randomUUID().toString();
-            String resultFileName = uuidFile + "." + photo.getOriginalFilename();
-            photo.transferTo(new File(uploadPath + "/" + resultFileName));
+            String resultFileName = UserServiceImpl.createPhotoUrl(photo, uploadPath);
             newPost.setPhotoURL(uploadPath + "/" + resultFileName);
+            newPost.setOriginalPhotoName(resultFileName);
         }
 
-        List<String> strTags = post.getTags();
         Set<NewsTag> tags = new HashSet<>();
 
-        strTags.forEach(tag -> {
+
+        Arrays.asList(mytags).forEach(tag -> {
             switch (tag) {
                 case "SPORT" -> {
                     NewsTag sportTag = newsTagRepo.findNewsTagByTag(ENewsTags.SPORT)
@@ -93,14 +86,16 @@ public class PostServiceImpl implements PostService {
         newPost.setTags(tags);
         User userFromDb = userRepo.findByUsername(user.getUsername()).orElseThrow(
                 () -> new RuntimeException("No such user!"));
+        newPost.setAuthorName(userFromDb.getFirstName() + " " + userFromDb.getLastName());
         userFromDb.getMyPosts().add(newPost);
         userRepo.save(userFromDb);
         return new MessageResponse("Post has created successfully!");
     }
 
     @Override
-    public List<Post> fetchPosts() {
-        return postRepo.findAll();
+    public Page<Post> fetchPosts(Integer pageNo, Integer pageSize, String sortBy) {
+        Pageable paging = PageRequest.of(pageNo, pageSize, Sort.by(sortBy));
+        return postRepo.findAll(paging);
     }
 
     @Override
@@ -117,25 +112,35 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public ResponseEntity<?> deletePostByIdByEditor(Integer postId) {
+    public MessageResponse deletePostByIdByEditor(Integer postId) {
 
         postRepo.deletePostByIdCustomMethod(postId);
-        return ResponseEntity.ok().body(new MessageResponse("Post has been deleted successfully"));
+        return new MessageResponse("Post has been deleted successfully");
     }
 
     @Override
-    public ResponseEntity<?> deletePostByIdByReader(Integer postId, UserDetails userDetails) {
+    public MessageResponse deletePostByIdByReader(Integer postId, UserDetails userDetails) {
         User me = userRepo.findByUsername(userDetails.getUsername()).orElseThrow(
                 () -> new RuntimeException("No such user!")
         );
         Optional<Post> idMatchedPostInMyPosts = me.getMyPosts().stream().filter(post -> post.getId() == postId).findFirst();
-        if(idMatchedPostInMyPosts.isPresent()) {
+        if (idMatchedPostInMyPosts.isPresent()) {
             postRepo.deletePostByIdCustomMethod(postId);
-            return ResponseEntity.ok().body(new MessageResponse("Post has been deleted successfully"));
+            return new MessageResponse("Post has been deleted successfully");
         }
 
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new MessageResponse("You can delete only your posts!"));
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new MessageResponse("You can delete only your posts!")).getBody();
 
 
+    }
+
+    @Override
+    public List<Post> fetchPostsByTag(String[] tags) {
+        Set<NewsTag> newsTags = new HashSet<>();
+        Arrays.asList(tags).forEach(tag -> newsTags.add(newsTagRepo.findNewsTagByTag(ENewsTags.valueOf(tag)).orElseThrow(
+                () -> new RuntimeException("No such tags")
+        )));
+
+        return postRepo.findByTagsIn(new ArrayList<>(newsTags));
     }
 }

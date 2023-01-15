@@ -1,6 +1,6 @@
 package kg.bekzhan.megalab.exceptions;
 
-public class TokenRefreshException extends RuntimeException{
+public class TokenRefreshException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     public TokenRefreshException(String token, String message) {

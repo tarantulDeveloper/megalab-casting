@@ -1,46 +1,54 @@
 package kg.bekzhan.megalab.controllers;
 
+import io.swagger.annotations.ApiOperation;
 import kg.bekzhan.megalab.payload.requests.LoginRequest;
 import kg.bekzhan.megalab.payload.requests.SignupRequest;
+import kg.bekzhan.megalab.payload.responses.MessageResponse;
+import kg.bekzhan.megalab.payload.responses.UserInfoResponse;
 import kg.bekzhan.megalab.services.RefreshTokenService;
-import kg.bekzhan.megalab.services.UserDetailsImpl;
 import kg.bekzhan.megalab.services.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Objects;
 
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
+//@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
 
+    @ApiOperation(value = "Login method", response = UserInfoResponse.class)
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<UserInfoResponse> authenticateUser(@RequestBody LoginRequest loginRequest) {
         return userService.login(loginRequest);
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@RequestBody SignupRequest signupRequest) {
+    public MessageResponse registerUser(@RequestBody SignupRequest signupRequest) {
         return userService.registerUser(signupRequest);
     }
 
+    @GetMapping("/activate/{activationCode}")
+    public String activateUser(@PathVariable("activationCode") String activationCode) {
+        return userService.activateUser(activationCode);
+    }
+
+
     @PostMapping("/refreshtoken")
-    public ResponseEntity<?> refreshAccessToken(HttpServletRequest request) {
+    public ResponseEntity<MessageResponse> refreshAccessToken(HttpServletRequest request) {
         return refreshTokenService.refreshAccessToken(request);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logoutUser() {
+    public ResponseEntity<MessageResponse> logoutUser() {
         return refreshTokenService.logout();
     }
+
+
 
 }

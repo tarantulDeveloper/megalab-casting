@@ -22,9 +22,9 @@ public class CommentController {
 
     @PostMapping("/reply/{commentId}")
     public MessageResponse createReply(@RequestBody CommentRequest comment,
-                                           @PathVariable("commentId") Integer commentId,
-                                           @AuthenticationPrincipal UserDetails userDetails) {
-        return commentService.createReply(comment,commentId,userDetails);
+                                       @PathVariable("commentId") Integer commentId,
+                                       @AuthenticationPrincipal UserDetails userDetails) {
+        return commentService.createReply(comment, commentId, userDetails);
     }
 
 }

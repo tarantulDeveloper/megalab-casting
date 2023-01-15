@@ -5,7 +5,6 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
-import java.time.LocalDate;
 import java.util.*;
 
 @Data
@@ -19,21 +18,19 @@ public class Post {
     @Column(columnDefinition = "TEXT")
     private String text;
     private String photoURL;
+    private String originalPhotoName;
 
     @Temporal(TemporalType.DATE)
     private Date publishedDate;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "posts_tags",
-    joinColumns = @JoinColumn(name = "post_id"),
-    inverseJoinColumns = @JoinColumn(name = "tag_id"))
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<NewsTag> tags = new HashSet<>();
 
-//    @ManyToOne(fetch = FetchType.EAGER)
-//    @JoinColumn(name = "author_id")
-//    @OnDelete(action = OnDeleteAction.CASCADE)
-//    private User user;
+    private String authorName;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "post_id", referencedColumnName = "id")

@@ -4,6 +4,7 @@ import kg.bekzhan.megalab.entities.ERole;
 import kg.bekzhan.megalab.entities.RefreshToken;
 import kg.bekzhan.megalab.entities.Role;
 import kg.bekzhan.megalab.entities.User;
+import kg.bekzhan.megalab.exceptions.UserNotFoundException;
 import kg.bekzhan.megalab.jwt.JwtUtils;
 import kg.bekzhan.megalab.payload.requests.LoginRequest;
 import kg.bekzhan.megalab.payload.requests.SignupRequest;
@@ -19,13 +20,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,19 +45,24 @@ public class UserServiceImpl implements UserService {
     private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
 
+    private final MailSender mailSender;
+
     @Value("${upload.path}")
     private String uploadPath;
 
     @Override
-    public ResponseEntity<?> registerUser(SignupRequest signupRequest) {
-        if (userRepo.existsByUsername(signupRequest.getUsername())) {
-            throw new RuntimeException("User is already exist.");
-        }
+    public MessageResponse registerUser(SignupRequest signupRequest) {
+
 
         User user = new User(
                 signupRequest.getLastName(), signupRequest.getFirstName(),
-                signupRequest.getUsername(), passwordEncoder.encode(signupRequest.getPassword())
+                signupRequest.getUsername(), passwordEncoder.encode(signupRequest.getPassword()),
+                signupRequest.getEmail()
         );
+
+        if (userRepo.existsByUsername(user.getUsername()) || userRepo.existsByEmail(user.getEmail())) {
+            throw new RuntimeException("User is already exist!");
+        }
 
         Set<Role> roles = new HashSet<>();
         Role readerRole = roleRepo.findByName(ERole.ROLE_READER).orElseThrow(
@@ -60,12 +72,28 @@ public class UserServiceImpl implements UserService {
 
         user.setRoles(roles);
 
-        user.setPhotoPath(uploadPath + "/" + "default-profile.png");
+        user.setActive(false);
+
+        user.setActivationCode(UUID.randomUUID().toString());
+
+        user.setPhotoPath(uploadPath + "/" + "default-profile.jpg");
+        user.setOriginalPhotoName("default-profile.jpg");
 
 
         userRepo.save(user);
 
-        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+        String message = String.format(
+                "Hello, %s %s! \n"
+                        + "Welcome to our system. Visit the link to activate your account: http://localhost:8080/api/auth/activate/%s",
+                user.getFirstName(),
+                user.getLastName(),
+                user.getActivationCode()
+        );
+
+        mailSender.send(user.getEmail(), "Activation code", message);
+
+
+        return new MessageResponse("User registered successfully! Please check your email to activate account.");
     }
 
     @Override
@@ -74,7 +102,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<?> login(LoginRequest loginRequest) {
+    public ResponseEntity<UserInfoResponse> login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
@@ -82,10 +110,11 @@ public class UserServiceImpl implements UserService {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
+
         ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
 
         List<String> roles = userDetails.getAuthorities().stream()
-                .map(item -> item.getAuthority())
+                .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
         RefreshToken refreshToken = refreshTokenService.generateRefreshToken(userDetails.getId());
@@ -100,5 +129,69 @@ public class UserServiceImpl implements UserService {
                         roles));
 
 
+    }
+
+    @Override
+    public User updateUser(UserDetails userDetails, String lastName, String firstName, String username, MultipartFile file) throws IOException {
+        User updatingUser = userRepo.findByUsername(userDetails.getUsername()).orElseThrow(
+                UserNotFoundException::new
+        );
+        updatingUser.setLastName(lastName);
+        updatingUser.setFirstName(firstName);
+        updatingUser.setUsername(username);
+        if (file != null) {
+            String resultFileName = createPhotoUrl(file, uploadPath);
+            updatingUser.setPhotoPath(uploadPath + "/" + resultFileName);
+            updatingUser.setOriginalPhotoName(resultFileName);
+        }
+
+        return userRepo.save(updatingUser);
+    }
+
+    @Override
+    public MessageResponse deletePhoto(UserDetails userDetails) {
+        User user = userRepo.findByUsername(userDetails.getUsername()).orElseThrow(
+                UserNotFoundException::new
+        );
+        user.setPhotoPath("");
+        userRepo.save(user);
+        return new MessageResponse("The User's photo is removed successfully!");
+    }
+
+    @Override
+    public String activateUser(String activationCode) {
+        User user = userRepo.findByActivationCode(activationCode).orElseThrow(
+                UserNotFoundException::new
+        );
+        user.setActivationCode(null);
+        user.setActive(true);
+        userRepo.save(user);
+        return "<h1 style='text-align: center; font-size: 40px; margin-top: 100px; color: green;'> Hello, "
+                + user.getFirstName() + " " + user.getLastName() + ", your account has been activated</h1>";
+    }
+
+    @Override
+    public MessageResponse makeEditor(Integer userId) {
+        User user = userRepo.findById(userId).orElseThrow(
+                UserNotFoundException::new
+        );
+        Role adminRole = roleRepo.findByName(ERole.ROLE_EDITOR).orElseThrow(
+                () -> new RuntimeException("No such role!")
+        );
+        user.getRoles().add(adminRole);
+        userRepo.save(user);
+        return new MessageResponse("User's role has been updated");
+    }
+
+    public static String createPhotoUrl(MultipartFile file, String uploadPath) throws IOException {
+        File uploadDir = new File(uploadPath);
+        if (!uploadDir.exists()) {
+            uploadDir.mkdir();
+        }
+
+        String uuidFile = UUID.randomUUID().toString();
+        String resultFileName = uuidFile + "." + file.getOriginalFilename();
+        file.transferTo(new File(uploadPath + "/" + resultFileName));
+        return resultFileName;
     }
 }
