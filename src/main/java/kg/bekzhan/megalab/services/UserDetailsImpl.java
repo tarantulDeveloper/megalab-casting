@@ -13,15 +13,13 @@ import java.util.stream.Collectors;
 
 public class UserDetailsImpl implements UserDetails {
 
-    private static final long serialVersionUID = 1L;
-
-    private int id;
-    private String username;
-    private String email;
+    private final int id;
+    private final String username;
+    private final String email;
     @JsonIgnore
-    private String password;
-    private Boolean active;
-    private Collection<? extends GrantedAuthority> authorities;
+    private final String password;
+    private final Boolean active;
+    private final Collection<? extends GrantedAuthority> authorities;
 
     public UserDetailsImpl(Integer id, String username, String password, String email, Boolean active,
                            Collection<? extends GrantedAuthority> authorities) {

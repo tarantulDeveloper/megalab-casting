@@ -116,9 +116,12 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public MessageResponse deletePostByIdByEditor(Integer postId) {
+        if (postRepo.existsById(postId)) {
+            postRepo.deletePostByIdCustomMethod(postId);
+            return new MessageResponse("Post has been deleted successfully");
+        }
+        throw new ResourceNotFoundException("No such post!");
 
-        postRepo.deletePostByIdCustomMethod(postId);
-        return new MessageResponse("Post has been deleted successfully");
     }
 
     @Override
@@ -126,6 +129,7 @@ public class PostServiceImpl implements PostService {
         User me = userRepo.findByUsername(userDetails.getUsername()).orElseThrow(
                 UserNotFoundException::new
         );
+
         Optional<Post> idMatchedPostInMyPosts = me.getMyPosts().stream().filter(post -> post.getId() == postId).findFirst();
         if (idMatchedPostInMyPosts.isPresent()) {
             postRepo.deletePostByIdCustomMethod(postId);

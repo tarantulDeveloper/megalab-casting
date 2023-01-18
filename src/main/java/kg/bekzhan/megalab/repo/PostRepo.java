@@ -20,4 +20,5 @@ public interface PostRepo extends JpaRepository<Post, Integer> {
 
     List<Post> findByTagsIn(List<NewsTag> tags);
 
+
 }

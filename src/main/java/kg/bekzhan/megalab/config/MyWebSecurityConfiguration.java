@@ -22,18 +22,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class MyWebSecurityConfiguration {
 
-    private final UserDetailsServiceImpl userDetailsService;
-    private final AuthEntryPointJwt unauthorizedHandler;
-
     private static final String[] AUTH_WHITELIST = {
             "/api/auth/**",
             "/swagger-resources/**",
             "/swagger-ui/**",
             "/v3/api-docs",
             "/webjars/**",
-            "/actuator/**",
             "/api/main/**"
     };
+    private final UserDetailsServiceImpl userDetailsService;
+    private final AuthEntryPointJwt unauthorizedHandler;
 
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {

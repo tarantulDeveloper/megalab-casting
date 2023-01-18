@@ -15,10 +15,10 @@ import java.util.Set;
 @Entity(name = "users")
 @Data
 @Table(name = "users",
-uniqueConstraints = {
-        @UniqueConstraint(columnNames = "username"),
-        @UniqueConstraint(columnNames = "email")
-})
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "username"),
+                @UniqueConstraint(columnNames = "email")
+        })
 @NoArgsConstructor
 public class User {
     @Id

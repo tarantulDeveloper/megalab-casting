@@ -4,6 +4,7 @@ import kg.bekzhan.megalab.entities.ERole;
 import kg.bekzhan.megalab.entities.RefreshToken;
 import kg.bekzhan.megalab.entities.Role;
 import kg.bekzhan.megalab.entities.User;
+import kg.bekzhan.megalab.exceptions.ForbiddenException;
 import kg.bekzhan.megalab.exceptions.ResourceIsAlreadyExistException;
 import kg.bekzhan.megalab.exceptions.ResourceNotFoundException;
 import kg.bekzhan.megalab.exceptions.UserNotFoundException;
@@ -35,10 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,6 +53,18 @@ public class UserServiceImpl implements UserService {
 
     @Value("${upload.path}")
     private String uploadPath;
+
+    public static String createPhotoUrl(MultipartFile file, String uploadPath) throws IOException {
+        File uploadDir = new File(uploadPath);
+        if (!uploadDir.exists()) {
+            uploadDir.mkdir();
+        }
+
+        String uuidFile = UUID.randomUUID().toString();
+        String resultFileName = uuidFile + "." + file.getOriginalFilename();
+        file.transferTo(new File(uploadPath + "/" + resultFileName));
+        return resultFileName;
+    }
 
     @Override
     public MessageResponse registerUser(SignupRequest signupRequest) {
@@ -191,7 +201,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public MessageResponse deleteUserById(Integer userId) {
+    public MessageResponse deleteUserByIdByEditor(Integer userId) {
+
         User user = userRepo.findById(userId).orElseThrow(
                 UserNotFoundException::new
         );
@@ -199,15 +210,12 @@ public class UserServiceImpl implements UserService {
         return new MessageResponse("User has been deleted successfully!");
     }
 
-    public static String createPhotoUrl(MultipartFile file, String uploadPath) throws IOException {
-        File uploadDir = new File(uploadPath);
-        if (!uploadDir.exists()) {
-            uploadDir.mkdir();
+    @Override
+    public MessageResponse deleteUserByIdByUser(Integer userId, UserDetailsImpl userDetails) {
+        if (Objects.equals(userId, userDetails.getId())) {
+            userRepo.deleteByUsername(userDetails.getUsername());
+            return new MessageResponse("Your account has been deleted!");
         }
-
-        String uuidFile = UUID.randomUUID().toString();
-        String resultFileName = uuidFile + "." + file.getOriginalFilename();
-        file.transferTo(new File(uploadPath + "/" + resultFileName));
-        return resultFileName;
+        throw new ForbiddenException("You can delete only your own account!");
     }
 }

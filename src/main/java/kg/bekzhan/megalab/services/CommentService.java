@@ -8,4 +8,5 @@ public interface CommentService {
     MessageResponse createComment(CommentRequest comment, Integer postId, UserDetails userDetails);
 
     MessageResponse createReply(CommentRequest comment, Integer commentId, UserDetails userDetails);
+
 }

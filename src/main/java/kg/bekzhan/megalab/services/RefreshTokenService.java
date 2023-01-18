@@ -27,12 +27,11 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
-    @Value("${jwtRefreshExpirationInHours}")
-    private long jwtRefreshExpirationInHours;
-
     private final RefreshTokenRepo refreshTokenRepo;
     private final JwtUtils jwtUtils;
     private final UserRepo userRepo;
+    @Value("${jwtRefreshExpirationInHours}")
+    private long jwtRefreshExpirationInHours;
 
     public Optional<RefreshToken> findByToken(String token) {
         return refreshTokenRepo.findByToken(token);

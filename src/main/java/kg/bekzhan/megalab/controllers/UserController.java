@@ -2,21 +2,22 @@ package kg.bekzhan.megalab.controllers;
 
 import kg.bekzhan.megalab.entities.User;
 import kg.bekzhan.megalab.payload.responses.MessageResponse;
+import kg.bekzhan.megalab.services.UserDetailsImpl;
 import kg.bekzhan.megalab.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
 import java.io.IOException;
-import java.util.List;
 
 @RestController
-    @RequestMapping("/api/v1/user")
+@RequestMapping("/api/user")
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
@@ -54,9 +55,16 @@ public class UserController {
         return userService.deletePhoto(userDetails);
     }
 
-    @PreAuthorize("hasRole('EDITOR')")
+
     @DeleteMapping("/{userId}")
-    public MessageResponse deleteUserById(@PathVariable("userId") Integer userId) {
-        return userService.deleteUserById(userId);
+    @Transactional
+    public MessageResponse deleteUserById(@PathVariable("userId") Integer userId, HttpServletRequest request,
+                                          @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        if (request.isUserInRole("ROLE_EDITOR")) {
+            return userService.deleteUserByIdByEditor(userId);
+        } else {
+            return userService.deleteUserByIdByUser(userId, userDetails);
+        }
+
     }
 }

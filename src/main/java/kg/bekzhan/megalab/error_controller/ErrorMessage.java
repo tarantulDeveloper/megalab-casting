@@ -1,4 +1,4 @@
-package kg.bekzhan.megalab.advice;
+package kg.bekzhan.megalab.error_controller;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

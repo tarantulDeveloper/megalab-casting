@@ -11,7 +11,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 
 
 public interface UserService {
@@ -29,5 +28,7 @@ public interface UserService {
 
     MessageResponse makeEditor(Integer userId);
 
-    MessageResponse deleteUserById(Integer userId);
+    MessageResponse deleteUserByIdByEditor(Integer userId);
+
+    MessageResponse deleteUserByIdByUser(Integer userId, UserDetailsImpl userDetails);
 }

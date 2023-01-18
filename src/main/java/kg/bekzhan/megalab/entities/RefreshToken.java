@@ -11,7 +11,12 @@ import java.time.ZonedDateTime;
 @Data
 public class RefreshToken {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "r_token_generator")
+    @SequenceGenerator(
+            name = "r_token_generator",
+            sequenceName = "tokens_sequence",
+            allocationSize = 1
+    )
     private int id;
 
 

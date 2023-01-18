@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/admin")
+@RequestMapping("/api/admin")
 public class EditorController {
     private final RoleService roleService;
     private final NewsTagService newsTagService;
