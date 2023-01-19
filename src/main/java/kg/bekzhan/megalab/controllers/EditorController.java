@@ -1,5 +1,6 @@
 package kg.bekzhan.megalab.controllers;
 
+import io.swagger.annotations.ApiOperation;
 import kg.bekzhan.megalab.entities.NewsTag;
 import kg.bekzhan.megalab.entities.Role;
 import kg.bekzhan.megalab.services.NewsTagService;
@@ -19,12 +20,14 @@ public class EditorController {
 
     //creating new role
     @PostMapping("/roles/{role}")
+    @ApiOperation(value = "Creating a new role", notes = "Only the users with editor role can perform this operation.")
     public Role createRole(@PathVariable("role") String role) {
         return roleService.createRole(role);
     }
 
     //creating new newstag
     @PostMapping("/tags/{tag}")
+    @ApiOperation(value = "Creating a new tag", notes = "Only the users with editor role can perform this operation.")
     public NewsTag createNewsTag(@PathVariable("tag") String newsTag) {
         return newsTagService.createTag(newsTag);
     }

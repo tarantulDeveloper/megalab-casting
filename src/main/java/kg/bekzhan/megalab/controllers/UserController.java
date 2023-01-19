@@ -1,5 +1,6 @@
 package kg.bekzhan.megalab.controllers;
 
+import io.swagger.annotations.ApiOperation;
 import kg.bekzhan.megalab.entities.User;
 import kg.bekzhan.megalab.payload.responses.MessageResponse;
 import kg.bekzhan.megalab.services.UserDetailsImpl;
@@ -45,6 +46,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('EDITOR')")
+    @ApiOperation(value = "Adding 'EDITOR' role to user", notes = "Only the users with editor role can perform this operation.")
     @PutMapping("/role/{id}")
     public MessageResponse makeEditor(@PathVariable("id") Integer userId) {
         return userService.makeEditor(userId);
@@ -58,6 +60,7 @@ public class UserController {
 
     @DeleteMapping("/{userId}")
     @Transactional
+    @ApiOperation(value = "Deleting user by id", notes = "Editor users can delete any user. Reader user can delete only their own accounts. Method also checks if user exist/")
     public MessageResponse deleteUserById(@PathVariable("userId") Integer userId, HttpServletRequest request,
                                           @AuthenticationPrincipal UserDetailsImpl userDetails) {
         if (request.isUserInRole("ROLE_EDITOR")) {

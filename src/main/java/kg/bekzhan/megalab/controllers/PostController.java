@@ -1,5 +1,6 @@
 package kg.bekzhan.megalab.controllers;
 
+import io.swagger.annotations.ApiOperation;
 import kg.bekzhan.megalab.payload.responses.MessageResponse;
 import kg.bekzhan.megalab.services.PostService;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,7 @@ public class PostController {
 //    }
 
     @DeleteMapping("/{postId}")
+    @ApiOperation(value = "Deleting a post", notes = "Editor users can delete any post. Reader users can delete only their own posts. Method also checks if post exist.")
     public MessageResponse deletePostById(@PathVariable("postId") Integer postId, HttpServletRequest request,
                                           @AuthenticationPrincipal UserDetails userdetails) {
         if (request.isUserInRole("ROLE_EDITOR")) {
